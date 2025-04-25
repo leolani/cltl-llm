@@ -19,7 +19,7 @@ setup(
     description='LLM component for Leolani',
     long_description=long_description,
     long_description_content_type="text/markdown",
-    python_requires='>=3.9ßß',
+    python_requires='>=3.10',
     install_requires=['cltl.combot', 'emissor'],
     extras_require={
         "service": [
