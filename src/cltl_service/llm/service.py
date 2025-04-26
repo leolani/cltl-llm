@@ -16,63 +16,8 @@ from cltl_service.emissordata.client import EmissorDataClient
 from emissor.representation.scenario import TextSignal
 from cltl.emissordata.api import EmissorDataStorage
 
-text_end_master = ["Als je meer wil weten over taaltechnologie en AI ga dan naar zaal HG-1A-43 om 13:00 uur voor de ""Language and AI"" master.",
-               "Je  kunt ook om 14:00 naar de Onderzoeksmaster ""Humanities"" gaan en dan naar de ""Language Technology track"" in OG23 in het filosofenhof.",
-               "Misschien zie ik je daar!",
-               "Hennie van der Vliet van CLTL zal al je vragen  beantwoorden over ons masterprogramma."]
-
-text_start_master = ["Hallo daar, welkom op de Vrije Universiteit Amsterdam.", "Waarmee kan ik je helpen?"]
-
-text_intro_robert = ["Ik wil graag een verkennend gesprek met je voeren in opdracht van de volgende geestelijke gezondheidsorganisaties:", "Arkin, huisartsengroep ROHA, Amsterdam UMC, en Zilveren Kruis.",
-              "Ik registreer het gesprek in de verschillende EPD’s en ECD’s.", "Dit zal administratieve lastenverlichting in de zorg geven."]
-text_next_robert = ["De informatie die ik verzamel is uitsluitend bedoeld voor de huisarts.","Het zal dan ook alleen bij de huisarts terechtkomen en niet bijvoorbeeld bij je woningcorporatie.",
-             "Integriteit, gegevenscoördinatie en privacy zijn belangrijk.",
-             "De volgende keer wil ik in ons gesprek ook graag een symptomen check doen.",
-             "Na het gesprek kan ik de gegevens analyseren met de zorgprofessional.", "De volgende dag volgt daar dan een bericht over.",
-             "Ik ga nu een gesprek met je voeren over je gezondheid. Ik gebruik daarvoor een open-source AI model Lama.",
-             "Hoe voel je je vandaag?"]
-
-text_out_robert = ["Het laatste stukje van het gesprek heb ik dus gevoerd met de hulp van AI.",
-            "Het klinkt best goed ook al is de AI niet bewust met Nederlandse data getraind.",
-            "Het probleem is echter dat we geen controle hebben over de antwoorden die de AI geeft.",
-            "De training is vooral gebaseerd op Amerikaanse gezondheidsprotocollen en Engelse data.",
-            "Nederlandse protocollen en persoonlijke informatie van een patiënt worden niet meegenomen bij het trainen.",
-            "In onze oplossing willen we die controle wel behouden.", "We trainen de AI daarom met Nederlandse medische data.",
-            "Ook gebruiken we een Knowledge Graph als lange termijn geheugen en om te redeneren.",
-            "De Nederlandse medische praktijk en de persoonlijke omstandigheden zijn dan leidend voor de reactie van de AI.",
-            "Tot ziens!"]
-text_plot = ["Kijk hier! Hier zie je een plot van ons gesprek.", "De plot geeft weer wat er gezegd is door wie maar ook wat ik gezien heb en welke emoties en intenties ik heb waargenomen.",
-             "Deze analyse is nuttig voor mij om te begrijpen hoe de communicatie verloopt."]
-
 logger = logging.getLogger(__name__)
-
-CONTENT_TYPE_SEPARATOR = ';'
-
-
-_ADDRESS1 = [
-    "Je zegt net: ",
-    "Ik hoorde je zeggen: ",
-    "Ja fascinerend je noemde: ",
-    "Mag ik daar iets op zeggen? Je zei namelijk: ",
-    "Zei je zojuist iets over: ",
-    "Je zei zojuist iets over: "
-]
-
-_ADDRESS2 = [
-    "Daar wil ik wel even op ingaan. ",
-    "Daar heb ik het volgende over te zeggen. ",
-    "Weet je wat ik daarvan vindt? ",
-    "Volgens mijn bescheiden mening: ",
-    "Ja, daar heb ik wel iets op te zeggen. ",
-    "Dit is mijn commentaar hierop. ",
-    "Mijn mening hierover is: ",
-    "Ik zou hier het volgende aan willen toevoegen: ",
-    "Tja, wat moet ik daar op zeggen? "
-    
-]
-
 sleep_time = 6
-_MASTER = False
 
 class LLMService:
     @classmethod
@@ -116,7 +61,6 @@ class LLMService:
         self._topic_worker = None
         self._language =language
         self._text_intro = [f"Hallo {self._llm._get_human_name()}, ik ben Leolani en ik ben er om je te helpen.", "Ik luister naar je en geef je medische adviezen."]
-        self._text_next = []
         self._text_stop = ["Tot ziens!", "Ik hoop je snel weer te zien."]
 
 
