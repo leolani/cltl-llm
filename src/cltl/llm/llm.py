@@ -1,5 +1,4 @@
 from langchain_ollama import ChatOllama
-from cltl.mention_extraction import object_label_translation
 import logging
 logger = logging.getLogger(__name__)
 
@@ -14,7 +13,7 @@ MAX_HISTORY = 25
 TEMPERATURE = 0.4
 
 class LLMImpl(LLM):
-    def __init__(self, llm_language="Nederlands", port="9001", human = "vreemdeling"):
+    def __init__(self, llm="llama3.2", llm_language="Nederlands", port="9001", human = "vreemdeling"):
         self._SERVER = True
         self._human = human
         self._language = "nl"
@@ -26,7 +25,7 @@ class LLMImpl(LLM):
             self._client = OpenAI(base_url=url, api_key="not-needed")
         else:
             self._llm = ChatOllama(
-                model=MODEL,
+                model=llm,
                 temperature=TEMPERATURE,
                 # other params ...
             )
@@ -90,7 +89,6 @@ class LLMImpl(LLM):
             logger.debug("ERROR parsing JSON",response.content)
 
         new_message = {"role": "assistant", "content": content}
-        print('THE NEW MESSAGE IS', new_message)
         self._history.append(new_message)
         return new_message['content']
 
@@ -107,7 +105,6 @@ class LLMImpl(LLM):
         for chunk in completion:
             if chunk.choices[0].delta.content is not None:
                 response += chunk.choices[0].delta.content
-        print('The server resoponse is'. response)
         return response
 
     def respond_server(self, statement):
@@ -119,33 +116,9 @@ class LLMImpl(LLM):
 
         response = self.server_invoke(self._history)
         new_message = {"role": "assistant", "content": response}
-       # print('NEW MESSAGE', new_message)
         self._history.append(new_message)
         return new_message['content']
 
-    def respond_visual(self, visuals:[]):
-        if self._language == "nl":
-            dutch_objects = []
-            for object in visuals:
-                dutch_object_pair = object_label_translation.to_dutch(object)
-                dutch_objects.append(dutch_object_pair[0])
-            visuals = dutch_objects
-        if len(visuals)>2:
-            objects = " ".join(visuals)
-            input = [self._visual_instruct, {"role": "assistant", "content": objects}]
-            print("VISUAL INPUT for Llama", input)
-            #response = self._llm.invoke(input)
-            response = self.server_invoke(input)
-            try:
-                content = response.content
-            #            content = json.loads(response.content)
-            except:
-                logger.debug("ERROR parsing JSON", response.content)
-            print("VISUAL OUTPUT from Llama", response.content)
-
-            return response.content
-        else:
-            return None
 
     def _listen(self, statement):
         self._history.append({"role": "user", "content": statement})
@@ -153,7 +126,7 @@ class LLMImpl(LLM):
 
 if __name__ == "__main__":
     language="Dutch"
-    llama = LlamaImpl(language)
+    llama = LLMImpl(language)
     userinput ="Wat zijn Schwartz waarden?"
     while not userinput.lower() in ["quit", "exit"]:
         response = llama._analyze(userinput)
