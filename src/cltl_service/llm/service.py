@@ -19,16 +19,16 @@ from cltl.emissordata.api import EmissorDataStorage
 logger = logging.getLogger(__name__)
 sleep_time = 6
 
+
 class LLMService:
     @classmethod
     def from_config(cls, llm: LLM, emissor_client: EmissorDataClient,
                     event_bus: EventBus, resource_manager: ResourceManager,
                     config_manager: ConfigurationManager, emissor_storage: EmissorDataStorage):
-        config = config_manager.get_config("cltl.llmn")
+        config = config_manager.get_config("cltl.llm")
         langconfig = config_manager.get_config("cltl.language")
 
         input_topic = config.get("topic_input")
-        image_topic = config.get("image.input")
         output_topic = config.get("topic_output")
         topic_scenario = config.get("topic_scenario") if "topic_scenario" in config else None
 
@@ -36,13 +36,13 @@ class LLMService:
         intentions = config.get("intentions", multi=True) if "intentions" in config else []
 
         port = config.get("port")
-        llm._language =  langconfig.get("language")
+        llm._language = langconfig.get("language")
         llm._port = port
-        return cls(input_topic, image_topic, output_topic, topic_scenario,
+        return cls(input_topic, output_topic, topic_scenario,
                    intention_topic, intentions,
                    llm, llm._language, emissor_client, event_bus, resource_manager, emissor_storage)
 
-    def __init__(self, input_topic: str, image_topic:str, output_topic: str, scenario_topic: str,
+    def __init__(self, input_topic: str, output_topic: str, scenario_topic: str,
                  intention_topic: str, intentions: List[str],
                  llm: LLM, language: "en", emissor_client: EmissorDataClient,
                  event_bus: EventBus, resource_manager: ResourceManager, emissor_storage: EmissorDataStorage):
@@ -53,28 +53,27 @@ class LLMService:
         self._emissor_storage = emissor_storage
         self._input_topic = input_topic
         self._output_topic = output_topic
-        self._image_topic = image_topic
         self._scenario_topic = scenario_topic
         self._intentions = intentions if intentions else ()
         self._intention_topic = intention_topic if intention_topic else None
         self._first_utterance = True
         self._topic_worker = None
-        self._language =language
-        self._text_intro = [f"Hallo {self._llm._get_human_name()}, ik ben Leolani en ik ben er om je te helpen.", "Ik luister naar je en geef je medische adviezen."]
+        self._language = language
+        self._text_intro = [f"Hallo {self._llm._get_human_name()}, ik ben Leolani en ik ben er om je te helpen.",
+                            "Ik luister naar je en geef je medische adviezen."]
         self._text_stop = ["Tot ziens!", "Ik hoop je snel weer te zien."]
 
-
-        
     @property
     def app(self):
         return None
 
     def start(self, timeout=30):
-        self._topic_worker = TopicWorker([self._input_topic, self._scenario_topic, self._image_topic, self._intention_topic], self._event_bus,
-                                         provides=[self._output_topic],
-                                         intention_topic=self._intention_topic, intentions=self._intentions,
-                                         resource_manager=self._resource_manager, processor=self._process,
-                                         name=self.__class__.__name__)
+        self._topic_worker = TopicWorker(
+            [self._input_topic, self._scenario_topic, self._intention_topic], self._event_bus,
+            provides=[self._output_topic],
+            intention_topic=self._intention_topic, intentions=self._intentions,
+            resource_manager=self._resource_manager, processor=self._process,
+            name=self.__class__.__name__)
         self._topic_worker.start().wait()
 
     def stop(self):
@@ -86,11 +85,11 @@ class LLMService:
 
     def _process(self, event: Event):
         if event.metadata.topic == self._scenario_topic:
-            human =  event.payload.scenario.context.speaker
+            human = event.payload.scenario.context.speaker
             if human:
                 self._llm._set_human(human.name)
             return
-        
+
         if event.metadata.topic == self._input_topic:
             if self._first_utterance:
                 self._text_intro = [
@@ -99,17 +98,17 @@ class LLMService:
                 self.play_intro()
                 self._first_utterance = False
             elif self._stop_keyword(event.payload.signal.text.lower()):
-                    self._stop_script()
+                self._stop_script()
             else:
                 input = event.payload.signal.text
                 response = self._llm.respond(input)
                 llm_event = self._create_payload(response)
                 self._event_bus.publish(self._output_topic, Event.for_payload(llm_event))
 
-
     def play_intro(self):
         for response in self._text_intro:
-            signal = TextSignal.for_scenario(self._emissor_client.get_current_scenario_id(), timestamp_now(), timestamp_now(), None,
+            signal = TextSignal.for_scenario(self._emissor_client.get_current_scenario_id(), timestamp_now(),
+                                             timestamp_now(), None,
                                              response)
             self._event_bus.publish(self._output_topic,
                                     Event.for_payload(TextSignalEvent.for_agent(signal)))
@@ -117,7 +116,8 @@ class LLMService:
 
     def play_next(self):
         for response in self._text_next:
-            signal = TextSignal.for_scenario(self._emissor_client.get_current_scenario_id(), timestamp_now(), timestamp_now(), None,
+            signal = TextSignal.for_scenario(self._emissor_client.get_current_scenario_id(), timestamp_now(),
+                                             timestamp_now(), None,
                                              response)
             self._event_bus.publish(self._output_topic,
                                     Event.for_payload(TextSignalEvent.for_agent(signal)))
@@ -132,7 +132,8 @@ class LLMService:
     def _stop_script(self):
         time.sleep(sleep_time)
         for response in self._text_stop:
-            signal = TextSignal.for_scenario(self._emissor_client.get_current_scenario_id(), timestamp_now(), timestamp_now(), None,
+            signal = TextSignal.for_scenario(self._emissor_client.get_current_scenario_id(), timestamp_now(),
+                                             timestamp_now(), None,
                                              response)
             self._event_bus.publish(self._output_topic,
                                     Event.for_payload(TextSignalEvent.for_agent(signal)))

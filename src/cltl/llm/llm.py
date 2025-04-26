@@ -13,10 +13,10 @@ MAX_HISTORY = 25
 TEMPERATURE = 0.4
 
 class LLMImpl(LLM):
-    def __init__(self, llm="llama3.2", llm_language="Nederlands", port="9001", human = "vreemdeling"):
-        self._SERVER = True
+    def __init__(self, llm="llama3.2", language="nl",  llm_language="Nederlands", port="9001", human = "vreemdeling"):
+        self._SERVER = False
         self._human = human
-        self._language = "nl"
+        self._language = language
         self._llm_language = llm_language
         self._client = None
         self._llm = None
