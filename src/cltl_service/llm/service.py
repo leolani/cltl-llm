@@ -26,7 +26,6 @@ class LLMService:
                     event_bus: EventBus, resource_manager: ResourceManager,
                     config_manager: ConfigurationManager, emissor_storage: EmissorDataStorage):
         config = config_manager.get_config("cltl.llm")
-        langconfig = config_manager.get_config("cltl.language")
 
         input_topic = config.get("topic_input")
         output_topic = config.get("topic_output")
@@ -35,12 +34,13 @@ class LLMService:
         intention_topic = config.get("topic_intention") if "topic_intention" in config else None
         intentions = config.get("intentions", multi=True) if "intentions" in config else []
 
-        port = config.get("port")
-        llm._language = langconfig.get("language")
+        port = config.get("port") if "port" in config else None
+        language = config.get("language") if "language" in config else None
+        llm._llm_language = language
         llm._port = port
         return cls(input_topic, output_topic, topic_scenario,
                    intention_topic, intentions,
-                   llm, llm._language, emissor_client, event_bus, resource_manager, emissor_storage)
+                   llm, language, emissor_client, event_bus, resource_manager, emissor_storage)
 
     def __init__(self, input_topic: str, output_topic: str, scenario_topic: str,
                  intention_topic: str, intentions: List[str],
