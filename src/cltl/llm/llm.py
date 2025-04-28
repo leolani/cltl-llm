@@ -12,7 +12,6 @@ QWEN = "qwen2.5"
 class LLMImpl(LLM):
     def __init__(self,  instruction: str = "",
                  model="llama3.2",
-                 llm_language="English",
                  port="9001",
                  human = "stranger",
                  max_history: int = 25,
@@ -20,7 +19,6 @@ class LLMImpl(LLM):
                  server= False):
         self._SERVER = server
         self._human = human
-        self._llm_language = llm_language
         self._client = None
         self._llm = None
         self._temperature = temperature
@@ -113,10 +111,12 @@ class LLMImpl(LLM):
 
 if __name__ == "__main__":
     language="Nederlands"
-    prompts = PROMPTS(llm_language=language, human_name="Fred")
-    llm = LLMImpl(llm_language=language, instruction=prompts._instruct_medical_dutch, server=False)
-    userinput ="Ik ben misselijk?"
+    human_name = "Fred"
+    prompts = PROMPTS(llm_language=language, human_name=human_name)
+    llm = LLMImpl(instruction=prompts._instruct_medical_dutch, server=False)
+    userinput =" Ik ben misselijk?"
+    print(human_name+">"+userinput)
     while not userinput.lower() in ["quit", "exit"]:
         response = llm.respond(userinput)
         print(response)
-        userinput=input("> ")
+        userinput=input(human_name+"> ")
