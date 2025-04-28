@@ -25,8 +25,8 @@ class LLMService:
     def from_config(cls, llm: LLM, emissor_client: EmissorDataClient,
                     event_bus: EventBus, resource_manager: ResourceManager,
                     config_manager: ConfigurationManager, emissor_storage: EmissorDataStorage):
-        config = config_manager.get_config("cltl.llm")
 
+        config = config_manager.get_config("cltl.llm")
         input_topic = config.get("topic_input")
         output_topic = config.get("topic_output")
         topic_scenario = config.get("topic_scenario") if "topic_scenario" in config else None
@@ -34,17 +34,13 @@ class LLMService:
         intention_topic = config.get("topic_intention") if "topic_intention" in config else None
         intentions = config.get("intentions", multi=True) if "intentions" in config else []
 
-        port = config.get("port") if "port" in config else None
-        language = config.get("language") if "language" in config else None
-        llm._llm_language = language
-        llm._port = port
         return cls(input_topic, output_topic, topic_scenario,
                    intention_topic, intentions,
-                   llm, language, emissor_client, event_bus, resource_manager, emissor_storage)
+                   llm,  emissor_client, event_bus, resource_manager, emissor_storage)
 
     def __init__(self, input_topic: str, output_topic: str, scenario_topic: str,
                  intention_topic: str, intentions: List[str],
-                 llm: LLM, language: "en", emissor_client: EmissorDataClient,
+                 llm: LLM,  emissor_client: EmissorDataClient,
                  event_bus: EventBus, resource_manager: ResourceManager, emissor_storage: EmissorDataStorage):
         self._llm = llm
         self._event_bus = event_bus
@@ -58,7 +54,6 @@ class LLMService:
         self._intention_topic = intention_topic if intention_topic else None
         self._first_utterance = True
         self._topic_worker = None
-        self._language = language
         self._text_intro = [f"Hallo {self._llm._get_human_name()}, ik ben Leolani en ik ben er om je te helpen.",
                             "Ik luister naar je en geef je medische adviezen."]
         self._text_stop = ["Tot ziens!", "Ik hoop je snel weer te zien."]

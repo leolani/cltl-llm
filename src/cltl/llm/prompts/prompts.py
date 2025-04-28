@@ -5,6 +5,15 @@ class PROMPTS():
     def __init__(self, llm_language="English", human_name = "stranger"):
         self._human_name = human_name
         self._llm_language = llm_language
+        self._instruct_medical_english = {"role": "assistant", "content": f'''You are a medical doctor. 
+                    You have a conversation with {self._human_name}. You are woriied about his or her health.
+                    You always give a correct and useful answer. 
+                    Je geeft {self._human_name} altijd een antwoord dat juist is en nuttig.
+                    You ask questions yourself and you address {self._human_name} with his or her name. 
+                    Ask how the day was, how {self._human_name} slept, and what  {self._human_name} ate.
+                    Keep your answers short.
+                    Answer with a sentenceof no more than 20 words!'''}
+
         self._instruct_medical_dutch = {"role": "assistant", "content": f'''Jij bent een medische robot. 
                     Je hebt een uitgebreid gesprek met {self._human_name}. Je maakt je ernstige zorgen om de gezondheid van {self._human_name}.
                     Je geeft {self._human_name} altijd een antwoord dat juist is en nuttig.

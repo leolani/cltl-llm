@@ -8,24 +8,30 @@ from cltl.llm.prompts.prompts import PROMPTS
 LLAMA = "llama3.2"
 DEEPSEEK_MODEL ="deepseek-r1:1.5b"
 QWEN = "qwen2.5"
-MODEL = LLAMA
-MAX_HISTORY = 25
-TEMPERATURE = 0.4
 
 class LLMImpl(LLM):
-    def __init__(self,  instruction: PROMPTS._instruct_medical_dutch, llm="llama3.2", llm_language="English", port="9001", human = "stranger", server= False):
+    def __init__(self,  instruction: str = "",
+                 model="llama3.2",
+                 llm_language="English",
+                 port="9001",
+                 human = "stranger",
+                 max_history: int = 25,
+                 temperature: float = 0.4,
+                 server= False):
         self._SERVER = server
         self._human = human
         self._llm_language = llm_language
         self._client = None
         self._llm = None
+        self._temperature = temperature
+        self._max_history = max_history
         if self._SERVER:
             url = "http://localhost:"+port+"/v1"
             self._client = OpenAI(base_url=url, api_key="not-needed")
         else:
             self._llm = ChatOllama(
-                model=llm,
-                temperature=TEMPERATURE,
+                model=model,
+                temperature=self._temperature,
                 # other params ...
             )
 
@@ -33,7 +39,7 @@ class LLMImpl(LLM):
         self._history = []
         self._history.append(self._instruct)
         ### preload the model
-        if not self._SERVER:
+        if not self._SERVER and instruction:
             self._llm.invoke(self._history)
         self.started = False
 
@@ -45,7 +51,7 @@ class LLMImpl(LLM):
 
     def _set_human (self, human):
         self._human = human
-        self._history.append({"role": "user", "content": f"Ik heet {self._human}."})
+        self._history.append({"role": "user", "content": f"My name is {self._human}."})
         if self._SERVER:
             self.server_invoke(self._history)
         else:
@@ -56,7 +62,7 @@ class LLMImpl(LLM):
         return self._human
 
     def respond(self, statement):
-        if len(self._history)>MAX_HISTORY:
+        if len(self._history)>self._max_history:
             self._history = []
             self._history.append(self._instruct)
         
@@ -78,7 +84,7 @@ class LLMImpl(LLM):
             # completion = client.chatCompletions.create(
             model="local-model",  # this field is currently unused
             messages=history,
-            temperature=TEMPERATURE,
+            temperature=self._temperature,
             #max_tokens=100,
             stream=True,
         )
@@ -89,7 +95,7 @@ class LLMImpl(LLM):
         return response
 
     def respond_server(self, statement):
-        if len(self._history) > MAX_HISTORY:
+        if len(self._history) > self._max_history:
             self._history = []
             self._history.append(self._instruct)
 
