@@ -1,34 +1,36 @@
 from langchain_ollama import ChatOllama
 import logging
+
 logger = logging.getLogger(__name__)
 from openai import OpenAI
 from cltl.llm.api import LLM
 from cltl.llm.prompts.prompts import PROMPTS
 
 LLAMA = "llama3.2"
-DEEPSEEK_MODEL ="deepseek-r1:1.5b"
+DEEPSEEK_MODEL = "deepseek-r1:1.5b"
 QWEN = "qwen2.5"
 
+
 class LLMImpl(LLM):
-    def __init__(self,  instruction: str = "",
-                 model="llama3.2",
+    def __init__(self, instruction: str = "",
+                 model_name="llama3.2",
                  port="9001",
-                 human = "stranger",
+                 human="stranger",
                  max_history: int = 25,
                  temperature: float = 0.4,
-                 server= False):
+                 server=False):
         self._SERVER = server
         self._human = human
-        self._client = None
-        self._llm = None
         self._temperature = temperature
         self._max_history = max_history
+        self._client = None
         if self._SERVER:
-            url = "http://localhost:"+port+"/v1"
+            url = "http://localhost:" + port + "/v1"
             self._client = OpenAI(base_url=url, api_key="not-needed")
         else:
-            self._llm = ChatOllama(
-                model=model,
+            self._client = ChatOllama(
+                model=model_name,
+               # model=model_name,
                 temperature=self._temperature,
                 # other params ...
             )
@@ -36,54 +38,53 @@ class LLMImpl(LLM):
         self._instruct = instruction
         self._history = []
         self._history.append(self._instruct)
-        ### preload the model
-        if not self._SERVER and instruction:
-            self._llm.invoke(self._history)
+        ### kick start the model
+        self._client.invoke(self._history)
         self.started = False
 
-    def _set_instruct (self, instruct):
+    def _set_instruct(self, instruct):
         self._instruct = instruct
 
-    def _set_language (self, language: str):
+    def _set_language(self, language: str):
         self._llm_language = language
 
-    def _set_human (self, human):
+    def _set_human(self, human):
         self._human = human
         self._history.append({"role": "user", "content": f"My name is {self._human}."})
         if self._SERVER:
             self.server_invoke(self._history)
         else:
-            self._llm.invoke(self._history)
+            print('BEFORE ERROR:', self._history, 'IS THE HISTORY')
+            self._client.invoke(self._history)
 
-
-    def _get_human_name (self):
+    def _get_human_name(self):
         return self._human
 
     def respond(self, statement):
         if len(self._history)>self._max_history:
             self._history = []
             self._history.append(self._instruct)
-        
+
         self._history.append({"role": "user", "content": statement})
 
-        response = self._llm.invoke(self._history)
+        response = self._client.invoke(self._history)
         try:
             content = response.content
-#            content = json.loads(response.content)
+        #            content = json.loads(response.content)
         except:
-            logger.debug("ERROR parsing JSON",response.content)
+            logger.debug("ERROR parsing JSON", response.content)
 
         new_message = {"role": "assistant", "content": content}
         self._history.append(new_message)
         return new_message['content']
 
-    def server_invoke (self, history):
+    def server_invoke(self, history):
         completion = self._client.chat.completions.create(
             # completion = client.chatCompletions.create(
             model="local-model",  # this field is currently unused
             messages=history,
             temperature=self._temperature,
-            #max_tokens=100,
+            # max_tokens=100,
             stream=True,
         )
         response = ""
@@ -104,19 +105,18 @@ class LLMImpl(LLM):
         self._history.append(new_message)
         return new_message['content']
 
-
     def _listen(self, statement):
         self._history.append({"role": "user", "content": statement})
 
 
 if __name__ == "__main__":
-    language="Nederlands"
+    language = "Nederlands"
     human_name = "Fred"
     prompts = PROMPTS(llm_language=language, human_name=human_name)
     llm = LLMImpl(instruction=prompts._instruct_medical_dutch, server=False)
-    userinput =" Ik ben misselijk?"
-    print(human_name+">"+userinput)
+    userinput = " Ik ben misselijk?"
+    print(human_name + ">" + userinput)
     while not userinput.lower() in ["quit", "exit"]:
         response = llm.respond(userinput)
         print(response)
-        userinput=input(human_name+"> ")
+        userinput = input(human_name + "> ")
