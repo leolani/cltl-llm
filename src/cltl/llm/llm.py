@@ -13,6 +13,8 @@ QWEN = "qwen2.5"
 
 class LLMImpl(LLM):
     def __init__(self, instruction: str = "",
+                 intro:str = "",
+                 stop : str = "",
                  model_name="llama3.2",
                  port="9001",
                  human="stranger",
@@ -36,6 +38,8 @@ class LLMImpl(LLM):
             )
 
         self._instruct = instruction
+        self.intro = intro
+        self.stop= stop
         self._history = []
         self._history.append(self._instruct)
         ### kick start the model
@@ -54,7 +58,6 @@ class LLMImpl(LLM):
         if self._SERVER:
             self.server_invoke(self._history)
         else:
-            print('BEFORE ERROR:', self._history, 'IS THE HISTORY')
             self._client.invoke(self._history)
 
     def _get_human_name(self):

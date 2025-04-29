@@ -17,7 +17,7 @@ from emissor.representation.scenario import TextSignal
 from cltl.emissordata.api import EmissorDataStorage
 
 logger = logging.getLogger(__name__)
-sleep_time = 6
+sleep_time = 3
 
 
 class LLMService:
@@ -52,11 +52,9 @@ class LLMService:
         self._scenario_topic = scenario_topic
         self._intentions = intentions if intentions else ()
         self._intention_topic = intention_topic if intention_topic else None
-        self._first_utterance = True
         self._topic_worker = None
-        self._text_intro = [f"Hallo {self._llm._get_human_name()}, ik ben Leolani en ik ben er om je te helpen.",
-                            "Ik luister naar je en geef je medische adviezen."]
-        self._text_stop = ["Tot ziens!", "Ik hoop je snel weer te zien."]
+        self._text_intro = llm.intro
+        self._text_stop = llm.stop
 
     @property
     def app(self):
@@ -83,16 +81,11 @@ class LLMService:
             human = event.payload.scenario.context.speaker
             if human:
                 self._llm._set_human(human.name)
+            self.play_intro()
             return
 
         if event.metadata.topic == self._input_topic:
-            if self._first_utterance:
-                self._text_intro = [
-                    f"Hallo {self._llm._get_human_name()}, ik ben Leolani en ik ben er om je te helpen.",
-                    "Ik luister naar je en geef je medische adviezen.", "Vertel wat over jezelf. Wie ben je?"]
-                self.play_intro()
-                self._first_utterance = False
-            elif self._stop_keyword(event.payload.signal.text.lower()):
+            if self._stop_keyword(event.payload.signal.text.lower()):
                 self._stop_script()
             else:
                 input = event.payload.signal.text
@@ -101,7 +94,7 @@ class LLMService:
                 self._event_bus.publish(self._output_topic, Event.for_payload(llm_event))
 
     def play_intro(self):
-        for response in self._text_intro:
+        for response in self._text_intro.split("."):
             signal = TextSignal.for_scenario(self._emissor_client.get_current_scenario_id(), timestamp_now(),
                                              timestamp_now(), None,
                                              response)
@@ -126,7 +119,7 @@ class LLMService:
 
     def _stop_script(self):
         time.sleep(sleep_time)
-        for response in self._text_stop:
+        for response in self._text_stop.split("."):
             signal = TextSignal.for_scenario(self._emissor_client.get_current_scenario_id(), timestamp_now(),
                                              timestamp_now(), None,
                                              response)
