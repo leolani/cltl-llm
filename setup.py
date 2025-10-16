@@ -20,7 +20,7 @@ setup(
     long_description=long_description,
     long_description_content_type="text/markdown",
     python_requires='>=3.10',
-    install_requires=['cltl.combot', 'emissor'],
+    install_requires=['cltl.combot', 'emissor', 'openai', 'ollama', 'langchain.ollama'],
     extras_require={
         "service": [
             "cltl.emissor-data",
