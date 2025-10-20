@@ -16,7 +16,7 @@ class LLMImpl(LLM):
                  intro:str = "",
                  stop : str = "",
                  model_name="llama3.2",
-                 port="9001",
+                 url="http://localhost:9001/v1",
                  human="stranger",
                  max_history: int = 25,
                  temperature: float = 0.4,
@@ -27,12 +27,10 @@ class LLMImpl(LLM):
         self._max_history = max_history
         self._client = None
         if self._SERVER:
-            url = "http://localhost:" + port + "/v1"
             self._client = OpenAI(base_url=url, api_key="not-needed")
         else:
             self._client = ChatOllama(
                 model=model_name,
-               # model=model_name,
                 temperature=self._temperature,
                 # other params ...
             )
