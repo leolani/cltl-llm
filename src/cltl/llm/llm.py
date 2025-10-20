@@ -32,6 +32,7 @@ class LLMImpl(LLM):
             self._client = ChatOllama(
                 model=model_name,
                 temperature=self._temperature,
+                base_url=url
                 # other params ...
             )
 
