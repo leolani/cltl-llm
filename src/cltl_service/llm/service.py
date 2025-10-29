@@ -81,34 +81,23 @@ class LLMService:
             human = event.payload.scenario.context.speaker
             if human:
                 self._llm._set_human(human.name)
-            self.play_intro()
-            return
-
-        if event.metadata.topic == self._input_topic:
+            self.play_intro(event)
+        elif event.metadata.topic == self._input_topic:
             if self._stop_keyword(event.payload.signal.text.lower()):
-                self._stop_script()
+                self._stop_script(event)
             else:
                 input = event.payload.signal.text
                 response = self._llm.respond(input)
                 llm_event = self._create_payload(response)
-                self._event_bus.publish(self._output_topic, Event.for_payload(llm_event))
+                self._event_bus.publish(self._output_topic, Event.for_payload(llm_event, source=event))
 
-    def play_intro(self):
+    def play_intro(self, event):
         for response in self._text_intro.split("."):
             signal = TextSignal.for_scenario(self._emissor_client.get_current_scenario_id(), timestamp_now(),
                                              timestamp_now(), None,
                                              response)
             self._event_bus.publish(self._output_topic,
-                                    Event.for_payload(TextSignalEvent.for_agent(signal)))
-            time.sleep(sleep_time)
-
-    def play_next(self):
-        for response in self._text_next:
-            signal = TextSignal.for_scenario(self._emissor_client.get_current_scenario_id(), timestamp_now(),
-                                             timestamp_now(), None,
-                                             response)
-            self._event_bus.publish(self._output_topic,
-                                    Event.for_payload(TextSignalEvent.for_agent(signal)))
+                                    Event.for_payload(TextSignalEvent.for_agent(signal), source=event))
             time.sleep(sleep_time)
 
     def _stop_keyword(self, utterance):
@@ -117,14 +106,14 @@ class LLMService:
                 return True
         return False
 
-    def _stop_script(self):
+    def _stop_script(self, event):
         time.sleep(sleep_time)
         for response in self._text_stop.split("."):
             signal = TextSignal.for_scenario(self._emissor_client.get_current_scenario_id(), timestamp_now(),
                                              timestamp_now(), None,
                                              response)
             self._event_bus.publish(self._output_topic,
-                                    Event.for_payload(TextSignalEvent.for_agent(signal)))
+                                    Event.for_payload(TextSignalEvent.for_agent(signal), source=event))
             time.sleep(sleep_time)
         self._emissor_storage.flush()
 
